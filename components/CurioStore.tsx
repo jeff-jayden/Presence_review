@@ -1,0 +1,50 @@
+import { useMemo, useState } from 'react';
+import { Badge, Button, Card, Drawer, Empty, Flex, Image, Input, Layout, Modal, Rate, Select, Space, Typography } from 'antd';
+import { HeartFilled, HeartOutlined, MinusOutlined, PlusOutlined, SearchOutlined, ShoppingOutlined } from '@ant-design/icons';
+
+const { Header, Content, Footer } = Layout;
+const { Title, Text, Paragraph, Link } = Typography;
+type Product = { id:number; name:string; category:string; price:number; oldPrice?:number; rating:number; reviews:number; image:string; badge?:string; color:string; description:string };
+const products: Product[] = [
+  { id:1,name:'Wave Pro Headphones',category:'Tech',price:189,oldPrice:229,rating:4.9,reviews:842,image:'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=900&q=85',badge:'Bestseller',color:'#e9c9a7',description:'Immersive sound, soft-touch comfort, and 40 hours of wireless listening.' },
+  { id:2,name:'Aura Table Light',category:'Home',price:79,rating:4.8,reviews:316,image:'https://images.unsplash.com/photo-1507473885765-e6ed057f782c?auto=format&fit=crop&w=900&q=85',badge:'New',color:'#cbd8bd',description:'A warm, dimmable glow with a clean silhouette for calm evening spaces.' },
+  { id:3,name:'Daypack 18L',category:'Travel',price:98,rating:4.7,reviews:508,image:'https://images.unsplash.com/photo-1553062407-98eeb64c6a62?auto=format&fit=crop&w=900&q=85',color:'#d8cbb9',description:'A lightweight everyday carry with a padded laptop sleeve and hidden pocket.' },
+  { id:4,name:'Cloud Knit Runner',category:'Style',price:124,oldPrice:148,rating:4.8,reviews:691,image:'https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=900&q=85',badge:'Limited',color:'#e6a38f',description:'Responsive cushioning and breathable knit for city miles and slow weekends.' },
+  { id:5,name:'Stoneware Pour Set',category:'Home',price:64,rating:4.6,reviews:184,image:'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&w=900&q=85',color:'#bec7b7',description:'Hand-finished ceramic pieces designed for an unhurried morning ritual.' },
+  { id:6,name:'Everyday Film Camera',category:'Tech',price:72,rating:4.7,reviews:229,image:'https://images.unsplash.com/photo-1526170375885-4d8ecf77b99f?auto=format&fit=crop&w=900&q=85',color:'#b9c4ca',description:'A playful point-and-shoot that makes everyday moments feel worth keeping.' },
+];
+const categories=['All','Tech','Home','Travel','Style'];
+
+function Brand(){return <Link className="brand" href="#top">curio<Text>.</Text></Link>}
+function ProductTile({product,saved,onSave,onOpen,onAdd}:{product:Product;saved:boolean;onSave:()=>void;onOpen:()=>void;onAdd:()=>void}){
+  return <Card className="product-card" bordered={false} styles={{body:{padding:0}}}>
+    <Flex className="product-image" vertical style={{background:product.color}}>
+      <Button className={`favorite ${saved?'saved':''}`} shape="circle" icon={saved?<HeartFilled/>:<HeartOutlined/>} onClick={onSave}/>
+      {product.badge&&<Text className="badge">{product.badge}</Text>}
+      <Button className="image-button" type="text" onClick={onOpen}><Image preview={false} src={product.image} alt={product.name}/></Button>
+      <Button className="quick-add" type="primary" onClick={onAdd}>Quick add <PlusOutlined/></Button>
+    </Flex>
+    <Button className="product-info" type="text" onClick={onOpen}><Text>{product.category}</Text><Title level={3}>{product.name}</Title><Flex justify="space-between"><Text strong>${product.price} {product.oldPrice&&<Text delete>${product.oldPrice}</Text>}</Text><Text>★ {product.rating} ({product.reviews})</Text></Flex></Button>
+  </Card>
+}
+
+export default function CurioStore(){
+  const [category,setCategory]=useState('All'); const [query,setQuery]=useState(''); const [sort,setSort]=useState('Featured');
+  const [favorites,setFavorites]=useState<number[]>([2]); const [cart,setCart]=useState<Record<number,number>>({});
+  const [selected,setSelected]=useState<Product|null>(null); const [cartOpen,setCartOpen]=useState(false);
+  const visible=useMemo(()=>products.filter(p=>(category==='All'||p.category===category)&&`${p.name} ${p.category}`.toLowerCase().includes(query.toLowerCase())).sort((a,b)=>sort==='Price: low to high'?a.price-b.price:sort==='Top rated'?b.rating-a.rating:a.id-b.id),[category,query,sort]);
+  const cartCount=Object.values(cart).reduce((sum,n)=>sum+n,0); const cartItems=products.filter(p=>cart[p.id]); const subtotal=cartItems.reduce((sum,p)=>sum+p.price*cart[p.id],0);
+  const add=(p:Product)=>setCart(c=>({...c,[p.id]:(c[p.id]||0)+1}));
+  return <Layout className="store-layout">
+    <Text className="announcement">Free worldwide delivery on orders over $100 <Text>Shop with confidence · 30-day returns</Text></Text>
+    <Header className="site-header"><Brand/><Input className="search" prefix={<SearchOutlined/>} allowClear value={query} onChange={e=>setQuery(e.target.value)} placeholder="Search our edit"/><Space className="header-actions"><Badge count={favorites.length}><Button type="text" shape="circle" icon={<HeartOutlined/>}/></Badge><Button className="bag-button" type="text" icon={<ShoppingOutlined/>} onClick={()=>setCartOpen(true)}>Bag <Badge count={cartCount} showZero/></Button></Space></Header>
+    <Content>
+      <Flex className="hero" id="top"><Flex className="hero-copy" vertical align="flex-start"><Text className="eyebrow">The autumn edit · 2026</Text><Title>Good things,<br/><Text italic>thoughtfully found.</Text></Title><Paragraph>Design-led essentials from independent makers and brands we trust. Chosen to last, delivered worldwide.</Paragraph><Button className="primary-cta" type="primary" href="#collection">Explore the collection ↗</Button><Text className="proof"><Text strong>4.8</Text> ★★★★★ <Text>Loved by 12,000+ curious people</Text></Text></Flex><Flex className="hero-image"><Image preview={false} src="https://images.unsplash.com/photo-1494438639946-1ebd1d20bf85?auto=format&fit=crop&w=1400&q=88" alt="A calm, curated living space"/><Card className="floating-card" bordered={false}><Text>Editor&apos;s pick</Text><Title level={3}>A softer kind of everyday.</Title><Button type="link" onClick={()=>setSelected(products[1])}>Discover the story →</Button></Card></Flex></Flex>
+      <Flex className="benefits" justify="space-around">{[['✦','Curated, not crowded','Only things worth knowing'],['◎','Worldwide delivery','Tracked to 40+ countries'],['↺','Easy returns','30 days to change your mind']].map(([icon,title,copy])=><Space key={title}><Text>{icon}</Text><Flex vertical><Text strong>{title}</Text><Text>{copy}</Text></Flex></Space>)}</Flex>
+      <Flex className="collection" id="collection" vertical><Flex className="section-heading" justify="space-between" align="flex-end"><Flex vertical><Text className="eyebrow">Made for real life</Text><Title level={2}>Our current favorites</Title></Flex><Paragraph>A small collection of clever, beautiful things that make the everyday feel a little more considered.</Paragraph></Flex><Flex className="toolbar" justify="space-between"><Space className="categories">{categories.map(item=><Button key={item} type="text" className={category===item?'active':''} onClick={()=>setCategory(item)}>{item}</Button>)}</Space><Select className="sort" value={sort} onChange={setSort} options={['Featured','Top rated','Price: low to high'].map(value=>({value,label:value}))}/></Flex>{visible.length?<Flex className="product-grid" wrap="wrap">{visible.map(p=><ProductTile key={p.id} product={p} saved={favorites.includes(p.id)} onSave={()=>setFavorites(c=>c.includes(p.id)?c.filter(id=>id!==p.id):[...c,p.id])} onOpen={()=>setSelected(p)} onAdd={()=>add(p)}/>)}</Flex>:<Empty description="No perfect match yet"><Button onClick={()=>{setQuery('');setCategory('All')}}>See everything</Button></Empty>}</Flex>
+    </Content>
+    <Footer><Brand/><Text>Objects with a point of view. Delivered worldwide.</Text><Space><Link href="#collection">Shop</Link><Link href="#collection">Our story</Link><Link href="#collection">Shipping</Link></Space><Text>© 2026 Curio Market</Text></Footer>
+    <Modal open={!!selected} footer={null} onCancel={()=>setSelected(null)} width={900} centered destroyOnHidden>{selected&&<Flex className="product-modal-content"><Flex className="modal-image" style={{background:selected.color}}><Image preview={false} src={selected.image} alt={selected.name}/></Flex><Flex className="modal-copy" vertical><Text className="eyebrow">{selected.category} · Curio approved</Text><Title level={2}>{selected.name}</Title><Space><Rate disabled allowHalf value={selected.rating}/><Text>{selected.rating} from {selected.reviews} reviews</Text></Space><Paragraph>{selected.description}</Paragraph><Title level={3}>${selected.price} <Text>Taxes included</Text></Title><Button className="modal-add" type="primary" size="large" onClick={()=>add(selected)}>Add to bag · ${selected.price}</Button><Text className="delivery">✓ In stock · Ships in 1–2 days</Text></Flex></Flex>}</Modal>
+    <Drawer title={<Title level={2}>Your bag <Badge count={cartCount} showZero/></Title>} open={cartOpen} onClose={()=>setCartOpen(false)} width={430}>{cartItems.length?<Flex vertical className="cart-items">{cartItems.map(p=><Card key={p.id} bordered={false}><Flex gap={16}><Image width={100} height={120} preview={false} src={p.image} alt={p.name}/><Flex vertical flex={1}><Text strong>{p.name}</Text><Text>{p.category}</Text><Text>${p.price}</Text><Space.Compact><Button icon={<MinusOutlined/>} onClick={()=>setCart(c=>({...c,[p.id]:Math.max(0,c[p.id]-1)}))}/><Button>{cart[p.id]}</Button><Button icon={<PlusOutlined/>} onClick={()=>add(p)}/></Space.Compact></Flex></Flex></Card>)}</Flex>:<Empty description="Your bag is waiting"/>}{cartItems.length>0&&<Flex className="cart-footer" vertical><Flex justify="space-between"><Text>Subtotal</Text><Text strong>${subtotal}</Text></Flex><Text>Shipping calculated at checkout. Free over $100.</Text><Button type="primary" size="large">Checkout securely →</Button></Flex>}</Drawer>
+  </Layout>
+}
